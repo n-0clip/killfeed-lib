@@ -5668,6 +5668,16 @@ function Library:SetFont(FontFace)
     Library:UpdateColorsUsingRegistry()
 end
 
+function Library:GetActiveWindows()
+    return #ExistingWindows
+end
+
+function Library:CloseAllWindows()
+    for i = #ExistingWindows, 1, -1 do
+        Library:Unload()
+    end
+end
+
 function Library:SetNotifySide(Side: string)
     Library.NotifySide = Side
 
