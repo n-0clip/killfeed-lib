@@ -5948,7 +5948,7 @@ function Library:CreateWindow(WindowInfo)
 	if #ExistingWindows > 0 then
         Library:Notify({
             Title = "Window Already Exists",
-            Description = "Another window is already open.",
+            Description = "another window is already open",
             Time = 5,
         })
         return ExistingWindows[1]
