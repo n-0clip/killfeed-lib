@@ -26,6 +26,7 @@ local Labels = {}
 local Buttons = {}
 local Toggles = {}
 local Options = {}
+local ExistingWindows = {}
 local Tooltips = {}
 
 local BaseURL = "https://raw.githubusercontent.com/n-0clip/killfeed-lib/refs/heads/main/"
@@ -5933,6 +5934,15 @@ function Library:Notify(...)
 end
 
 function Library:CreateWindow(WindowInfo)
+	if #ExistingWindows > 0 then
+        Library:Notify({
+            Title = "Window Already Exists",
+            Description = "Another window is already open.",
+            Time = 5,
+        })
+        return ExistingWindows[1]
+    end
+
     WindowInfo = Library:Validate(WindowInfo, Templates.Window)
     local ViewportSize: Vector2 = workspace.CurrentCamera.ViewportSize
     if RunService:IsStudio() and ViewportSize.X <= 5 and ViewportSize.Y <= 5 then
