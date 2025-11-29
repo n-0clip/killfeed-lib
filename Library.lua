@@ -5953,9 +5953,8 @@ function Library:CreateWindow(WindowInfo)
         })
         return ExistingWindows[1]
     end
-	local Window = OriginalCreateWindow(self, WindowInfo)
     WindowInfo = Library:Validate(WindowInfo, Templates.Window)
-	table.insert(ExistingWindows, Window)
+	table.insert(ExistingWindows, self)
     local ViewportSize: Vector2 = workspace.CurrentCamera.ViewportSize
     if RunService:IsStudio() and ViewportSize.X <= 5 and ViewportSize.Y <= 5 then
         repeat
