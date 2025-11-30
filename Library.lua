@@ -7559,7 +7559,7 @@ function Library:CreateWindow(WindowInfo)
                     DependencyBoxes = {},
                 }
 
-                function Tab:Show()
+				function Tab:Show()
 				    if Library.ActiveTab then
 				        Library.ActiveTab:Hide()
 				    end
@@ -7595,7 +7595,10 @@ function Library:CreateWindow(WindowInfo)
 				    end
 				
 				    TabContainer.Visible = true
-				    Tab:RefreshSides()
+				    
+				    if Tab.RefreshSides then
+				        Tab:RefreshSides()
+				    end
 				
 				    Library.ActiveTab = Tab
 				
