@@ -4266,7 +4266,7 @@ do
 
         return Input
     end
-
+	
 	function Funcs:AddSlider(Idx, Info)
 	    Info = Library:Validate(Info, Templates.Slider)
 	
@@ -4297,7 +4297,6 @@ do
 	
 	        Type = "Slider",
 	        
-	        -- НОВОЕ: Состояние для анимаций
 	        IsDragging = false,
 	        FillTween = nil,
 	    }
@@ -4350,7 +4349,7 @@ do
 	
 	    local Fill = New("Frame", {
 	        BackgroundColor3 = "AccentColor",
-	        Size = UDim2.fromScale(0.5, 1),
+	        Size = UDim2.fromScale(0, 1),
 	        Parent = Bar,
 	
 	        DPIExclude = {
@@ -4358,25 +4357,25 @@ do
 	        },
 	    })
 	
-	    -- ============ АНИМАЦИЯ ЗАПОЛНЕНИЯ СЛАЙДЕРА ============
+	    -- ============ ИСПРАВЛЕННАЯ ИНИЦИАЛИЗАЦИЯ ЗАПОЛНЕНИЯ ============
+	    local function InitializeFill()
+	        local X = (Slider.Value - Slider.Min) / (Slider.Max - Slider.Min)
+	        Fill.Size = UDim2.fromScale(math.max(0, math.min(1, X)), 1)
+	    end
+	
 	    local function AnimateFillBar(targetScale, instant)
-	        -- Отмена предыдущей анимации
+	        targetScale = math.max(0, math.min(1, targetScale)) -- Убедись что в диапазоне 0-1
+	        
 	        if Slider.FillTween then
 	            Slider.FillTween:Cancel()
 	        end
 	
 	        if instant then
-	            -- Без анимации
 	            Fill.Size = UDim2.fromScale(targetScale, 1)
 	        else
-	            -- Плавное заполнение
 	            Slider.FillTween = TweenService:Create(
 	                Fill,
-	                TweenInfo.new(
-	                    0.15,
-	                    Enum.EasingStyle.Quad,
-	                    Enum.EasingDirection.Out
-	                ),
+	                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 	                { Size = UDim2.fromScale(targetScale, 1) }
 	            )
 	            Slider.FillTween:Play()
@@ -4438,7 +4437,6 @@ do
 	
 	    function Slider:SetMax(Value)
 	        assert(Value > Slider.Min, "Max value cannot be less than the current min value.")
-	
 	        Slider:SetValue(math.clamp(Slider.Value, Slider.Min, Value))
 	        Slider.Max = Value
 	        Slider:Display()
@@ -4446,7 +4444,6 @@ do
 	
 	    function Slider:SetMin(Value)
 	        assert(Value < Slider.Max, "Min value cannot be greater than the current max value.")
-	
 	        Slider:SetValue(math.clamp(Slider.Value, Value, Slider.Max))
 	        Slider.Min = Value
 	        Slider:Display()
@@ -4463,7 +4460,6 @@ do
 	        end
 	
 	        Num = math.clamp(Num, Slider.Min, Slider.Max)
-	
 	        Slider.Value = Num
 	        Slider:Display()
 	
@@ -4484,7 +4480,6 @@ do
 	
 	    function Slider:SetVisible(Visible: boolean)
 	        Slider.Visible = Visible
-	
 	        Holder.Visible = Slider.Visible
 	        Groupbox:Resize()
 	    end
@@ -4508,44 +4503,30 @@ do
 	        Slider:Display()
 	    end
 	
-	    -- ============ ЭФФЕКТ НАВЕДЕНИЯ НА БАР ============
 	    Bar.MouseEnter:Connect(function()
 	        if not Slider.Disabled then
-	            -- Подсветка бара при наведении
-	            TweenService:Create(
-	                Bar,
-	                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	                { BackgroundColor3 = Library:GetBetterColor(Library.Scheme.MainColor, 2) }
-	            ):Play()
+	            TweenService:Create(Bar, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+	                BackgroundColor3 = Library:GetBetterColor(Library.Scheme.MainColor, 2)
+	            }):Play()
 	
-	            -- Текст становится более видимым
-	            TweenService:Create(
-	                DisplayLabel,
-	                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	                { TextTransparency = 0 }
-	            ):Play()
+	            TweenService:Create(DisplayLabel, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+	                TextTransparency = 0
+	            }):Play()
 	        end
 	    end)
 	
 	    Bar.MouseLeave:Connect(function()
 	        if not Slider.Disabled and not Slider.IsDragging then
-	            -- Возврат к исходному цвету
-	            TweenService:Create(
-	                Bar,
-	                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	                { BackgroundColor3 = Library.Scheme.MainColor }
-	            ):Play()
+	            TweenService:Create(Bar, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+	                BackgroundColor3 = Library.Scheme.MainColor
+	            }):Play()
 	
-	            -- Текст возвращает прозрачность
-	            TweenService:Create(
-	                DisplayLabel,
-	                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	                { TextTransparency = 0 }
-	            ):Play()
+	            TweenService:Create(DisplayLabel, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+	                TextTransparency = 0
+	            }):Play()
 	        end
 	    end)
 	
-	    -- ============ ОСНОВНАЯ ЛОГИКА ДРАГА СЛАЙДЕРА ============
 	    Bar.InputBegan:Connect(function(Input: InputObject)
 	        if not IsClickInput(Input) or Slider.Disabled then
 	            return
@@ -4553,30 +4534,18 @@ do
 	
 	        Slider.IsDragging = true
 	
-	        -- ============ ЭФФЕКТ АКТИВАЦИИ ============
-	        -- Увеличение высоты бара при драге
-	        TweenService:Create(
-	            Bar,
-	            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	            {
-	                Size = UDim2.new(1, 0, 0, 16),
-	                BackgroundColor3 = Library.Scheme.AccentColor,
-	            }
-	        ):Play()
+	        TweenService:Create(Bar, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+	            Size = UDim2.new(1, 0, 0, 16),
+	            BackgroundColor3 = Library.Scheme.AccentColor,
+	        }):Play()
 	
-	        -- Увеличение непрозрачности заливки
-	        TweenService:Create(
-	            Fill,
-	            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	            { BackgroundColor3 = Library:GetBetterColor(Library.Scheme.AccentColor, 3) }
-	        ):Play()
+	        TweenService:Create(Fill, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+	            BackgroundColor3 = Library:GetBetterColor(Library.Scheme.AccentColor, 3)
+	        }):Play()
 	
-	        -- Изменение прозрачности текста во время драга
-	        TweenService:Create(
-	            DisplayLabel,
-	            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	            { TextTransparency = 0 }
-	        ):Play()
+	        TweenService:Create(DisplayLabel, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+	            TextTransparency = 0
+	        }):Play()
 	
 	        for _, Side in pairs(Library.ActiveTab.Sides) do
 	            Side.ScrollingEnabled = false
@@ -4598,25 +4567,16 @@ do
 	            RunService.RenderStepped:Wait()
 	        end
 	
-	        -- ============ ЭФФЕКТ ОТПУСКАНИЯ ============
 	        Slider.IsDragging = false
 	
-	        -- Возврат к нормальной высоте
-	        TweenService:Create(
-	            Bar,
-	            TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-	            {
-	                Size = UDim2.new(1, 0, 0, 13),
-	                BackgroundColor3 = Library.Scheme.MainColor,
-	            }
-	        ):Play()
+	        TweenService:Create(Bar, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+	            Size = UDim2.new(1, 0, 0, 13),
+	            BackgroundColor3 = Library.Scheme.MainColor,
+	        }):Play()
 	
-	        -- Возврат заливки к акценту
-	        TweenService:Create(
-	            Fill,
-	            TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-	            { BackgroundColor3 = Library.Scheme.AccentColor }
-	        ):Play()
+	        TweenService:Create(Fill, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+	            BackgroundColor3 = Library.Scheme.AccentColor
+	        }):Play()
 	
 	        for _, Side in pairs(Library.ActiveTab.Sides) do
 	            Side.ScrollingEnabled = true
@@ -4629,6 +4589,7 @@ do
 	    end
 	
 	    Slider:UpdateColors()
+	    InitializeFill() -- ИСПРАВЛЕНИЕ: инициализируем правильно
 	    Slider:Display()
 	    Groupbox:Resize()
 	
@@ -4642,458 +4603,495 @@ do
 	    return Slider
 	end
 
-    function Funcs:AddDropdown(Idx, Info)
-        Info = Library:Validate(Info, Templates.Dropdown)
-
-        local Groupbox = self
-        local Container = Groupbox.Container
-
-        if Info.SpecialType == "Player" then
-            Info.Values = GetPlayers(Info.ExcludeLocalPlayer)
-            Info.AllowNull = true
-        elseif Info.SpecialType == "Team" then
-            Info.Values = GetTeams()
-            Info.AllowNull = true
-        end
-
-        local Dropdown = {
-            Text = typeof(Info.Text) == "string" and Info.Text or nil,
-            Value = Info.Multi and {} or nil,
-            Values = Info.Values,
-            DisabledValues = Info.DisabledValues,
-            Multi = Info.Multi,
-
-            SpecialType = Info.SpecialType,
-            ExcludeLocalPlayer = Info.ExcludeLocalPlayer,
-
-            Tooltip = Info.Tooltip,
-            DisabledTooltip = Info.DisabledTooltip,
-            TooltipTable = nil,
-
-            Callback = Info.Callback,
-            Changed = Info.Changed,
-
-            Disabled = Info.Disabled,
-            Visible = Info.Visible,
-
-            Type = "Dropdown",
-        }
-
-        local Holder = New("Frame", {
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, Dropdown.Text and 39 or 21),
-            Visible = Dropdown.Visible,
-            Parent = Container,
-        })
-
-        local Label = New("TextLabel", {
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 14),
-            Text = Dropdown.Text,
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Visible = not not Info.Text,
-            Parent = Holder,
-        })
-
-        local Display = New("TextButton", {
-            Active = not Dropdown.Disabled,
-            AnchorPoint = Vector2.new(0, 1),
-            BackgroundColor3 = "MainColor",
-            BorderColor3 = "OutlineColor",
-            BorderSizePixel = 1,
-            Position = UDim2.fromScale(0, 1),
-            Size = UDim2.new(1, 0, 0, 21),
-            Text = "---",
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = Holder,
-        })
-
-        New("UIPadding", {
-            PaddingLeft = UDim.new(0, 8),
-            PaddingRight = UDim.new(0, 4),
-            Parent = Display,
-        })
-
-        local ArrowImage = New("ImageLabel", {
-            AnchorPoint = Vector2.new(1, 0.5),
-            Image = ArrowIcon and ArrowIcon.Url or "",
-            ImageColor3 = "FontColor",
-            ImageRectOffset = ArrowIcon and ArrowIcon.ImageRectOffset or Vector2.zero,
-            ImageRectSize = ArrowIcon and ArrowIcon.ImageRectSize or Vector2.zero,
-            ImageTransparency = 0.5,
-            Position = UDim2.fromScale(1, 0.5),
-            Size = UDim2.fromOffset(16, 16),
-            Parent = Display,
-        })
-
-        local SearchBox
-        if Info.Searchable then
-            SearchBox = New("TextBox", {
-                BackgroundTransparency = 1,
-                PlaceholderText = "Search...",
-                Position = UDim2.fromOffset(8, 4),
-                Size = UDim2.new(1, -12, 1, 0),
-                TextSize = 14,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Visible = false,
-                Parent = Display,
-            })
-            New("UIPadding", {
-                PaddingLeft = UDim.new(0, 8),
-                Parent = SearchBox,
-            })
-        end
-
-        local MenuTable = Library:AddContextMenu(
-            Display,
-            function()
-                return UDim2.fromOffset(Display.AbsoluteSize.X, 0)
-            end,
-            function()
-                return { 0.5, Display.AbsoluteSize.Y + 1.5 }
-            end,
-            2,
-            function(Active: boolean)
-                Display.TextTransparency = (Active and SearchBox) and 1 or 0
-                ArrowImage.ImageTransparency = Active and 0 or 0.5
-                ArrowImage.Rotation = Active and 180 or 0
-                if SearchBox then
-                    SearchBox.Text = ""
-                    SearchBox.Visible = Active
-                end
-            end
-        )
-        Dropdown.Menu = MenuTable
-        Library:UpdateDPI(MenuTable.Menu, {
-            Position = false,
-            Size = false,
-        })
-
-        function Dropdown:RecalculateListSize(Count)
-            local Y = math.clamp(
-                (Count or GetTableSize(Dropdown.Values)) * (21 * Library.DPIScale),
-                0,
-                Info.MaxVisibleDropdownItems * (21 * Library.DPIScale)
-            )
-
-            MenuTable:SetSize(function()
-                return UDim2.fromOffset(Display.AbsoluteSize.X, Y)
-            end)
-        end
-
-        function Dropdown:UpdateColors()
-            if Library.Unloaded then
-                return
-            end
-
-            Label.TextTransparency = Dropdown.Disabled and 0.8 or 0
-            Display.TextTransparency = Dropdown.Disabled and 0.8 or 0
-            ArrowImage.ImageTransparency = Dropdown.Disabled and 0.8 or MenuTable.Active and 0 or 0.5
-        end
-
-        function Dropdown:Display()
-            if Library.Unloaded then
-                return
-            end
-
-            local Str = ""
-
-            if Info.Multi then
-                for _, Value in pairs(Dropdown.Values) do
-                    if Dropdown.Value[Value] then
-                        Str = Str
-                            .. (Info.FormatDisplayValue and tostring(Info.FormatDisplayValue(Value)) or tostring(Value))
-                            .. ", "
-                    end
-                end
-
-                Str = Str:sub(1, #Str - 2)
-            else
-                Str = Dropdown.Value and tostring(Dropdown.Value) or ""
-                if Str ~= "" and Info.FormatDisplayValue then
-                    Str = tostring(Info.FormatDisplayValue(Str))
-                end
-            end
-
-            if #Str > 25 then
-                Str = Str:sub(1, 22) .. "..."
-            end
-
-            Display.Text = (Str == "" and "---" or Str)
-        end
-
-        function Dropdown:OnChanged(Func)
-            Dropdown.Changed = Func
-        end
-
-        function Dropdown:GetActiveValues()
-            if Info.Multi then
-                local Table = {}
-
-                for Value, _ in pairs(Dropdown.Value) do
-                    table.insert(Table, Value)
-                end
-
-                return Table
-            end
-
-            return Dropdown.Value and 1 or 0
-        end
-
-        local Buttons = {}
-        function Dropdown:BuildDropdownList()
-            local Values = Dropdown.Values
-            local DisabledValues = Dropdown.DisabledValues
-
-            for Button, _ in pairs(Buttons) do
-                Button:Destroy()
-            end
-            table.clear(Buttons)
-
-            local Count = 0
-            for _, Value in pairs(Values) do
-                if SearchBox and not tostring(Value):lower():match(SearchBox.Text:lower()) then
-                    continue
-                end
-
-                Count += 1
-                local IsDisabled = table.find(DisabledValues, Value)
-                local Table = {}
-
-                local Button = New("TextButton", {
-                    BackgroundColor3 = "MainColor",
-                    BackgroundTransparency = 1,
-                    LayoutOrder = IsDisabled and 1 or 0,
-                    Size = UDim2.new(1, 0, 0, 21),
-                    Text = tostring(Value),
-                    TextSize = 14,
-                    TextTransparency = 0.5,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    Parent = MenuTable.Menu,
-                })
-                New("UIPadding", {
-                    PaddingLeft = UDim.new(0, 7),
-                    PaddingRight = UDim.new(0, 7),
-                    Parent = Button,
-                })
-
-                local Selected
-                if Info.Multi then
-                    Selected = Dropdown.Value[Value]
-                else
-                    Selected = Dropdown.Value == Value
-                end
-
-                function Table:UpdateButton()
-                    if Info.Multi then
-                        Selected = Dropdown.Value[Value]
-                    else
-                        Selected = Dropdown.Value == Value
-                    end
-
-                    Button.BackgroundTransparency = Selected and 0 or 1
-                    Button.TextTransparency = IsDisabled and 0.8 or Selected and 0 or 0.5
-                end
-
-                if not IsDisabled then
-                    Button.MouseButton1Click:Connect(function()
-                        local Try = not Selected
-
-                        if not (Dropdown:GetActiveValues() == 1 and not Try and not Info.AllowNull) then
-                            Selected = Try
-                            if Info.Multi then
-                                Dropdown.Value[Value] = Selected and true or nil
-                            else
-                                Dropdown.Value = Selected and Value or nil
-                            end
-
-                            for _, OtherButton in pairs(Buttons) do
-                                OtherButton:UpdateButton()
-                            end
-                        end
-
-                        Table:UpdateButton()
-                        Dropdown:Display()
-
-                        Library:SafeCallback(Dropdown.Callback, Dropdown.Value)
-                        Library:SafeCallback(Dropdown.Changed, Dropdown.Value)
-                        Library:UpdateDependencyBoxes()
-                    end)
-                end
-
-                Table:UpdateButton()
-                Dropdown:Display()
-
-                Buttons[Button] = Table
-            end
-
-            Dropdown:RecalculateListSize(Count)
-        end
-
-        function Dropdown:SetValue(Value)
-            if Info.Multi then
-                local Table = {}
-
-                for Val, Active in pairs(Value or {}) do
-                    if Active and table.find(Dropdown.Values, Val) then
-                        Table[Val] = true
-                    end
-                end
-
-                Dropdown.Value = Table
-            else
-                if table.find(Dropdown.Values, Value) then
-                    Dropdown.Value = Value
-                elseif not Value then
-                    Dropdown.Value = nil
-                end
-            end
-
-            Dropdown:Display()
-            for _, Button in pairs(Buttons) do
-                Button:UpdateButton()
-            end
-
-            if not Dropdown.Disabled then
-                Library:SafeCallback(Dropdown.Callback, Dropdown.Value)
-                Library:SafeCallback(Dropdown.Changed, Dropdown.Value)
-                Library:UpdateDependencyBoxes()
-            end
-        end
-
-        function Dropdown:SetValues(Values)
-            Dropdown.Values = Values
-            Dropdown:BuildDropdownList()
-        end
-
-        function Dropdown:AddValues(Values)
-            if typeof(Values) == "table" then
-                for _, val in pairs(Values) do
-                    table.insert(Dropdown.Values, val)
-                end
-            elseif typeof(Values) == "string" then
-                table.insert(Dropdown.Values, Values)
-            else
-                return
-            end
-
-            Dropdown:BuildDropdownList()
-        end
-
-        function Dropdown:SetDisabledValues(DisabledValues)
-            Dropdown.DisabledValues = DisabledValues
-            Dropdown:BuildDropdownList()
-        end
-
-        function Dropdown:AddDisabledValues(DisabledValues)
-            if typeof(DisabledValues) == "table" then
-                for _, val in pairs(DisabledValues) do
-                    table.insert(Dropdown.DisabledValues, val)
-                end
-            elseif typeof(DisabledValues) == "string" then
-                table.insert(Dropdown.DisabledValues, DisabledValues)
-            else
-                return
-            end
-
-            Dropdown:BuildDropdownList()
-        end
-
-        function Dropdown:SetDisabled(Disabled: boolean)
-            Dropdown.Disabled = Disabled
-
-            if Dropdown.TooltipTable then
-                Dropdown.TooltipTable.Disabled = Dropdown.Disabled
-            end
-
-            MenuTable:Close()
-            Display.Active = not Dropdown.Disabled
-            Dropdown:UpdateColors()
-        end
-
-        function Dropdown:SetVisible(Visible: boolean)
-            Dropdown.Visible = Visible
-
-            Holder.Visible = Dropdown.Visible
-            Groupbox:Resize()
-        end
-
-        function Dropdown:SetText(Text: string)
-            Dropdown.Text = Text
-            Holder.Size = UDim2.new(1, 0, 0, (Text and 39 or 21) * Library.DPIScale)
-
-            Label.Text = Text and Text or ""
-            Label.Visible = not not Text
-        end
-
-        Display.MouseButton1Click:Connect(function()
-            if Dropdown.Disabled then
-                return
-            end
-
-            MenuTable:Toggle()
-        end)
-
-        if SearchBox then
-            SearchBox:GetPropertyChangedSignal("Text"):Connect(Dropdown.BuildDropdownList)
-        end
-
-        local Defaults = {}
-        if typeof(Info.Default) == "string" then
-            local Index = table.find(Dropdown.Values, Info.Default)
-            if Index then
-                table.insert(Defaults, Index)
-            end
-
-        elseif typeof(Info.Default) == "table" then
-            for _, Value in next, Info.Default do
-                local Index = table.find(Dropdown.Values, Value)
-                if Index then
-                    table.insert(Defaults, Index)
-                end
-            end
-            
-        elseif Dropdown.Values[Info.Default] ~= nil then
-            table.insert(Defaults, Info.Default)
-        end
-
-        if next(Defaults) then
-            for i = 1, #Defaults do
-                local Index = Defaults[i]
-                if Info.Multi then
-                    Dropdown.Value[Dropdown.Values[Index]] = true
-                else
-                    Dropdown.Value = Dropdown.Values[Index]
-                end
-
-                if not Info.Multi then
-                    break
-                end
-            end
-        end
-
-        if typeof(Dropdown.Tooltip) == "string" or typeof(Dropdown.DisabledTooltip) == "string" then
-            Dropdown.TooltipTable = Library:AddTooltip(Dropdown.Tooltip, Dropdown.DisabledTooltip, Display)
-            Dropdown.TooltipTable.Disabled = Dropdown.Disabled
-        end
-
-        Dropdown:UpdateColors()
-        Dropdown:Display()
-        Dropdown:BuildDropdownList()
-        Groupbox:Resize()
-
-        Dropdown.Holder = Holder
-        table.insert(Groupbox.Elements, Dropdown)
-
-        Dropdown.Default = Defaults
-        Dropdown.DefaultValues = Dropdown.Values
-
-        Options[Idx] = Dropdown
-
-        return Dropdown
-    end
+	-- ============================================
+	-- 2. АНИМИРОВАННЫЙ DROPDOWN
+	-- ============================================
+	
+	function Funcs:AddDropdown(Idx, Info)
+	    Info = Library:Validate(Info, Templates.Dropdown)
+	
+	    local Groupbox = self
+	    local Container = Groupbox.Container
+	
+	    if Info.SpecialType == "Player" then
+	        Info.Values = GetPlayers(Info.ExcludeLocalPlayer)
+	        Info.AllowNull = true
+	    elseif Info.SpecialType == "Team" then
+	        Info.Values = GetTeams()
+	        Info.AllowNull = true
+	    end
+	
+	    local Dropdown = {
+	        Text = typeof(Info.Text) == "string" and Info.Text or nil,
+	        Value = Info.Multi and {} or nil,
+	        Values = Info.Values,
+	        DisabledValues = Info.DisabledValues,
+	        Multi = Info.Multi,
+	
+	        SpecialType = Info.SpecialType,
+	        ExcludeLocalPlayer = Info.ExcludeLocalPlayer,
+	
+	        Tooltip = Info.Tooltip,
+	        DisabledTooltip = Info.DisabledTooltip,
+	        TooltipTable = nil,
+	
+	        Callback = Info.Callback,
+	        Changed = Info.Changed,
+	
+	        Disabled = Info.Disabled,
+	        Visible = Info.Visible,
+	
+	        Type = "Dropdown",
+	    }
+	
+	    local Holder = New("Frame", {
+	        BackgroundTransparency = 1,
+	        Size = UDim2.new(1, 0, 0, Dropdown.Text and 39 or 21),
+	        Visible = Dropdown.Visible,
+	        Parent = Container,
+	    })
+	
+	    local Label = New("TextLabel", {
+	        BackgroundTransparency = 1,
+	        Size = UDim2.new(1, 0, 0, 14),
+	        Text = Dropdown.Text,
+	        TextSize = 14,
+	        TextXAlignment = Enum.TextXAlignment.Left,
+	        Visible = not not Info.Text,
+	        Parent = Holder,
+	    })
+	
+	    local Display = New("TextButton", {
+	        Active = not Dropdown.Disabled,
+	        AnchorPoint = Vector2.new(0, 1),
+	        BackgroundColor3 = "MainColor",
+	        BorderColor3 = "OutlineColor",
+	        BorderSizePixel = 1,
+	        Position = UDim2.fromScale(0, 1),
+	        Size = UDim2.new(1, 0, 0, 21),
+	        Text = "---",
+	        TextSize = 14,
+	        TextXAlignment = Enum.TextXAlignment.Left,
+	        Parent = Holder,
+	    })
+	
+	    New("UIPadding", {
+	        PaddingLeft = UDim.new(0, 8),
+	        PaddingRight = UDim.new(0, 4),
+	        Parent = Display,
+	    })
+	
+	    local ArrowImage = New("ImageLabel", {
+	        AnchorPoint = Vector2.new(1, 0.5),
+	        Image = ArrowIcon and ArrowIcon.Url or "",
+	        ImageColor3 = "FontColor",
+	        ImageRectOffset = ArrowIcon and ArrowIcon.ImageRectOffset or Vector2.zero,
+	        ImageRectSize = ArrowIcon and ArrowIcon.ImageRectSize or Vector2.zero,
+	        ImageTransparency = 0.5,
+	        Position = UDim2.fromScale(1, 0.5),
+	        Size = UDim2.fromOffset(16, 16),
+	        Parent = Display,
+	    })
+	
+	    local SearchBox
+	    if Info.Searchable then
+	        SearchBox = New("TextBox", {
+	            BackgroundTransparency = 1,
+	            PlaceholderText = "Search...",
+	            Position = UDim2.fromOffset(8, 4),
+	            Size = UDim2.new(1, -12, 1, 0),
+	            TextSize = 14,
+	            TextXAlignment = Enum.TextXAlignment.Left,
+	            Visible = false,
+	            Parent = Display,
+	        })
+	        New("UIPadding", {
+	            PaddingLeft = UDim.new(0, 8),
+	            Parent = SearchBox,
+	        })
+	    end
+	
+	    local MenuTable = Library:AddContextMenu(
+	        Display,
+	        function()
+	            return UDim2.fromOffset(Display.AbsoluteSize.X, 0)
+	        end,
+	        function()
+	            return { 0.5, Display.AbsoluteSize.Y + 1.5 }
+	        end,
+	        2,
+	        function(Active: boolean)
+	            Display.TextTransparency = (Active and SearchBox) and 1 or 0
+	            
+	            -- ============ АНИМАЦИЯ СТРЕЛКИ ============
+	            TweenService:Create(
+	                ArrowImage,
+	                TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	                { Rotation = Active and 180 or 0 }
+	            ):Play()
+	
+	            -- ============ АНИМАЦИЯ ПОДСВЕТКИ ============
+	            TweenService:Create(
+	                Display,
+	                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	                { BackgroundColor3 = Active and Library:GetBetterColor(Library.Scheme.MainColor, 2) or Library.Scheme.MainColor }
+	            ):Play()
+	
+	            if SearchBox then
+	                SearchBox.Text = ""
+	                SearchBox.Visible = Active
+	            end
+	        end
+	    )
+	    Dropdown.Menu = MenuTable
+	    Library:UpdateDPI(MenuTable.Menu, {
+	        Position = false,
+	        Size = false,
+	    })
+	
+	    function Dropdown:RecalculateListSize(Count)
+	        local Y = math.clamp(
+	            (Count or GetTableSize(Dropdown.Values)) * (21 * Library.DPIScale),
+	            0,
+	            Info.MaxVisibleDropdownItems * (21 * Library.DPIScale)
+	        )
+	
+	        MenuTable:SetSize(function()
+	            return UDim2.fromOffset(Display.AbsoluteSize.X, Y)
+	        end)
+	    end
+	
+	    function Dropdown:UpdateColors()
+	        if Library.Unloaded then
+	            return
+	        end
+	
+	        Label.TextTransparency = Dropdown.Disabled and 0.8 or 0
+	        Display.TextTransparency = Dropdown.Disabled and 0.8 or 0
+	        ArrowImage.ImageTransparency = Dropdown.Disabled and 0.8 or MenuTable.Active and 0 or 0.5
+	    end
+	
+	    function Dropdown:Display()
+	        if Library.Unloaded then
+	            return
+	        end
+	
+	        local Str = ""
+	
+	        if Info.Multi then
+	            for _, Value in pairs(Dropdown.Values) do
+	                if Dropdown.Value[Value] then
+	                    Str = Str
+	                        .. (Info.FormatDisplayValue and tostring(Info.FormatDisplayValue(Value)) or tostring(Value))
+	                        .. ", "
+	                end
+	            end
+	
+	            Str = Str:sub(1, #Str - 2)
+	        else
+	            Str = Dropdown.Value and tostring(Dropdown.Value) or ""
+	            if Str ~= "" and Info.FormatDisplayValue then
+	                Str = tostring(Info.FormatDisplayValue(Str))
+	            end
+	        end
+	
+	        if #Str > 25 then
+	            Str = Str:sub(1, 22) .. "..."
+	        end
+	
+	        Display.Text = (Str == "" and "---" or Str)
+	    end
+	
+	    function Dropdown:OnChanged(Func)
+	        Dropdown.Changed = Func
+	    end
+	
+	    function Dropdown:GetActiveValues()
+	        if Info.Multi then
+	            local Table = {}
+	
+	            for Value, _ in pairs(Dropdown.Value) do
+	                table.insert(Table, Value)
+	            end
+	
+	            return Table
+	        end
+	
+	        return Dropdown.Value and 1 or 0
+	    end
+	
+	    local Buttons = {}
+	    function Dropdown:BuildDropdownList()
+	        local Values = Dropdown.Values
+	        local DisabledValues = Dropdown.DisabledValues
+	
+	        for Button, _ in pairs(Buttons) do
+	            Button:Destroy()
+	        end
+	        table.clear(Buttons)
+	
+	        local Count = 0
+	        for _, Value in pairs(Values) do
+	            if SearchBox and not tostring(Value):lower():match(SearchBox.Text:lower()) then
+	                continue
+	            end
+	
+	            Count += 1
+	            local IsDisabled = table.find(DisabledValues, Value)
+	            local Table = {}
+	
+	            local Button = New("TextButton", {
+	                BackgroundColor3 = "MainColor",
+	                BackgroundTransparency = 1,
+	                LayoutOrder = IsDisabled and 1 or 0,
+	                Size = UDim2.new(1, 0, 0, 21),
+	                Text = tostring(Value),
+	                TextSize = 14,
+	                TextTransparency = 0.5,
+	                TextXAlignment = Enum.TextXAlignment.Left,
+	                Parent = MenuTable.Menu,
+	            })
+	            New("UIPadding", {
+	                PaddingLeft = UDim.new(0, 7),
+	                PaddingRight = UDim.new(0, 7),
+	                Parent = Button,
+	            })
+	
+	            local Selected
+	            if Info.Multi then
+	                Selected = Dropdown.Value[Value]
+	            else
+	                Selected = Dropdown.Value == Value
+	            end
+	
+	            function Table:UpdateButton()
+	                if Info.Multi then
+	                    Selected = Dropdown.Value[Value]
+	                else
+	                    Selected = Dropdown.Value == Value
+	                end
+	
+	                Button.BackgroundTransparency = Selected and 0 or 1
+	                Button.TextTransparency = IsDisabled and 0.8 or Selected and 0 or 0.5
+	            end
+	
+	            -- ============ АНИМАЦИЯ НАВЕДЕНИЯ НА ЭЛЕМЕНТ ============
+	            Button.MouseEnter:Connect(function()
+	                if not IsDisabled then
+	                    TweenService:Create(
+	                        Button,
+	                        TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	                        {
+	                            BackgroundColor3 = Library:GetBetterColor(Library.Scheme.MainColor, 2),
+	                            BackgroundTransparency = 0.5,
+	                        }
+	                    ):Play()
+	                end
+	            end)
+	
+	            Button.MouseLeave:Connect(function()
+	                if not IsDisabled then
+	                    Table:UpdateButton()
+	                end
+	            end)
+	
+	            if not IsDisabled then
+	                Button.MouseButton1Click:Connect(function()
+	                    local Try = not Selected
+	
+	                    if not (Dropdown:GetActiveValues() == 1 and not Try and not Info.AllowNull) then
+	                        Selected = Try
+	                        if Info.Multi then
+	                            Dropdown.Value[Value] = Selected and true or nil
+	                        else
+	                            Dropdown.Value = Selected and Value or nil
+	                        end
+	
+	                        for _, OtherButton in pairs(Buttons) do
+	                            OtherButton:UpdateButton()
+	                        end
+	                    end
+	
+	                    Table:UpdateButton()
+	                    Dropdown:Display()
+	
+	                    Library:SafeCallback(Dropdown.Callback, Dropdown.Value)
+	                    Library:SafeCallback(Dropdown.Changed, Dropdown.Value)
+	                    Library:UpdateDependencyBoxes()
+	                end)
+	            end
+	
+	            Table:UpdateButton()
+	            Dropdown:Display()
+	
+	            Buttons[Button] = Table
+	        end
+	
+	        Dropdown:RecalculateListSize(Count)
+	    end
+	
+	    function Dropdown:SetValue(Value)
+	        if Info.Multi then
+	            local Table = {}
+	
+	            for Val, Active in pairs(Value or {}) do
+	                if Active and table.find(Dropdown.Values, Val) then
+	                    Table[Val] = true
+	                end
+	            end
+	
+	            Dropdown.Value = Table
+	        else
+	            if table.find(Dropdown.Values, Value) then
+	                Dropdown.Value = Value
+	            elseif not Value then
+	                Dropdown.Value = nil
+	            end
+	        end
+	
+	        Dropdown:Display()
+	        for _, Button in pairs(Buttons) do
+	            Button:UpdateButton()
+	        end
+	
+	        if not Dropdown.Disabled then
+	            Library:SafeCallback(Dropdown.Callback, Dropdown.Value)
+	            Library:SafeCallback(Dropdown.Changed, Dropdown.Value)
+	            Library:UpdateDependencyBoxes()
+	        end
+	    end
+	
+	    function Dropdown:SetValues(Values)
+	        Dropdown.Values = Values
+	        Dropdown:BuildDropdownList()
+	    end
+	
+	    function Dropdown:AddValues(Values)
+	        if typeof(Values) == "table" then
+	            for _, val in pairs(Values) do
+	                table.insert(Dropdown.Values, val)
+	            end
+	        elseif typeof(Values) == "string" then
+	            table.insert(Dropdown.Values, Values)
+	        else
+	            return
+	        end
+	
+	        Dropdown:BuildDropdownList()
+	    end
+	
+	    function Dropdown:SetDisabledValues(DisabledValues)
+	        Dropdown.DisabledValues = DisabledValues
+	        Dropdown:BuildDropdownList()
+	    end
+	
+	    function Dropdown:AddDisabledValues(DisabledValues)
+	        if typeof(DisabledValues) == "table" then
+	            for _, val in pairs(DisabledValues) do
+	                table.insert(Dropdown.DisabledValues, val)
+	            end
+	        elseif typeof(DisabledValues) == "string" then
+	            table.insert(Dropdown.DisabledValues, DisabledValues)
+	        else
+	            return
+	        end
+	
+	        Dropdown:BuildDropdownList()
+	    end
+	
+	    function Dropdown:SetDisabled(Disabled: boolean)
+	        Dropdown.Disabled = Disabled
+	
+	        if Dropdown.TooltipTable then
+	            Dropdown.TooltipTable.Disabled = Dropdown.Disabled
+	        end
+	
+	        MenuTable:Close()
+	        Display.Active = not Dropdown.Disabled
+	        Dropdown:UpdateColors()
+	    end
+	
+	    function Dropdown:SetVisible(Visible: boolean)
+	        Dropdown.Visible = Visible
+	
+	        Holder.Visible = Dropdown.Visible
+	        Groupbox:Resize()
+	    end
+	
+	    function Dropdown:SetText(Text: string)
+	        Dropdown.Text = Text
+	        Holder.Size = UDim2.new(1, 0, 0, (Text and 39 or 21) * Library.DPIScale)
+	
+	        Label.Text = Text and Text or ""
+	        Label.Visible = not not Text
+	    end
+	
+	    Display.MouseButton1Click:Connect(function()
+	        if Dropdown.Disabled then
+	            return
+	        end
+	
+	        MenuTable:Toggle()
+	    end)
+	
+	    if SearchBox then
+	        SearchBox:GetPropertyChangedSignal("Text"):Connect(Dropdown.BuildDropdownList)
+	    end
+	
+	    local Defaults = {}
+	    if typeof(Info.Default) == "string" then
+	        local Index = table.find(Dropdown.Values, Info.Default)
+	        if Index then
+	            table.insert(Defaults, Index)
+	        end
+	
+	    elseif typeof(Info.Default) == "table" then
+	        for _, Value in next, Info.Default do
+	            local Index = table.find(Dropdown.Values, Value)
+	            if Index then
+	                table.insert(Defaults, Index)
+	            end
+	        end
+	        
+	    elseif Dropdown.Values[Info.Default] ~= nil then
+	        table.insert(Defaults, Info.Default)
+	    end
+	
+	    if next(Defaults) then
+	        for i = 1, #Defaults do
+	            local Index = Defaults[i]
+	            if Info.Multi then
+	                Dropdown.Value[Dropdown.Values[Index]] = true
+	            else
+	                Dropdown.Value = Dropdown.Values[Index]
+	            end
+	
+	            if not Info.Multi then
+	                break
+	            end
+	        end
+	    end
+	
+	    if typeof(Dropdown.Tooltip) == "string" or typeof(Dropdown.DisabledTooltip) == "string" then
+	        Dropdown.TooltipTable = Library:AddTooltip(Dropdown.Tooltip, Dropdown.DisabledTooltip, Display)
+	        Dropdown.TooltipTable.Disabled = Dropdown.Disabled
+	    end
+	
+	    Dropdown:UpdateColors()
+	    Dropdown:Display()
+	    Dropdown:BuildDropdownList()
+	    Groupbox:Resize()
+	
+	    Dropdown.Holder = Holder
+	    table.insert(Groupbox.Elements, Dropdown)
+	
+	    Dropdown.Default = Defaults
+	    Dropdown.DefaultValues = Dropdown.Values
+	
+	    Options[Idx] = Dropdown
+	
+	    return Dropdown
+	end
 
     function Funcs:AddViewport(Idx, Info)
         Info = Library:Validate(Info, Templates.Viewport)
