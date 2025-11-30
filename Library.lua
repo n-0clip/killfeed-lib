@@ -7596,11 +7596,9 @@ function Library:CreateWindow(WindowInfo)
                 end
 
                 Button.MouseButton1Click:Connect(Tab.Show)
-
                 setmetatable(Tab, BaseGroupbox)
-
                 Tabbox.Tabs[Name] = Tab
-
+			
                 return Tab
             end
 
@@ -7635,68 +7633,7 @@ function Library:CreateWindow(WindowInfo)
                 }):Play()
             end
         end
-
-        function Tab:Show()
-            if Library.ActiveTab then
-                Library.ActiveTab:Hide()
-            end
-
-            TweenService:Create(TabButton, Library.TweenInfo, {
-                BackgroundTransparency = 0,
-            }):Play()
-            TweenService:Create(TabLabel, Library.TweenInfo, {
-                TextTransparency = 0,
-            }):Play()
-            if TabIcon then
-                TweenService:Create(TabIcon, Library.TweenInfo, {
-                    ImageTransparency = 0,
-                }):Play()
-            end
-
-            if Description then
-                CurrentTabInfo.Visible = true
-
-                if IsDefaultSearchbarSize then
-                    SearchBox.Size = UDim2.fromScale(0.5, 1)
-                end
-
-                CurrentTabLabel.Text = Name
-                CurrentTabDescription.Text = Description
-            end
-
-            TabContainer.Visible = true
-            Tab:RefreshSides()
-
-            Library.ActiveTab = Tab
-
-            if Library.Searching then
-                Library:UpdateSearch(Library.SearchText)
-            end
-        end
-
-        function Tab:Hide()
-            TweenService:Create(TabButton, Library.TweenInfo, {
-                BackgroundTransparency = 1,
-            }):Play()
-            TweenService:Create(TabLabel, Library.TweenInfo, {
-                TextTransparency = 0.5,
-            }):Play()
-            if TabIcon then
-                TweenService:Create(TabIcon, Library.TweenInfo, {
-                    ImageTransparency = 0.5,
-                }):Play()
-            end
-            TabContainer.Visible = false
-
-            if IsDefaultSearchbarSize then
-                SearchBox.Size = UDim2.fromScale(1, 1)
-            end
-
-            CurrentTabInfo.Visible = false
-
-            Library.ActiveTab = nil
-        end
-
+		
         --// Execution \\--
         if not Library.ActiveTab then
             Tab:Show()
