@@ -7560,65 +7560,28 @@ function Library:CreateWindow(WindowInfo)
                 }
 
 				function Tab:Show()
-				    if Library.ActiveTab then
-				        Library.ActiveTab:Hide()
-				    end
-				
-				    TweenService:Create(TabButton, Library.TweenInfo, {
-				        BackgroundTransparency = 0,
-				    }):Play()
-				    TweenService:Create(TabLabel, Library.TweenInfo, {
-				        TextTransparency = 0,
-				    }):Play()
-				    if TabIcon then
-				        TweenService:Create(TabIcon, Library.TweenInfo, {
-				            ImageTransparency = 0,
-				        }):Play()
-				    end
-				
-				    if Description then
-				        CurrentTabInfo.Visible = true
-				
-				        if IsDefaultSearchbarSize then
-				            SearchBox.Size = UDim2.fromScale(0.5, 1)
-				        end
-				
-				        CurrentTabLabel.Text = Name
-				        CurrentTabDescription.Text = Description
-				    end
-				
-				    TabContainer.Visible = true
-				    Tab:RefreshSides()
-				
-				    Library.ActiveTab = Tab
-				
-				    if Library.Searching then
-				        Library:UpdateSearch(Library.SearchText)
-				    end
-				end
+                    if Tabbox.ActiveTab then
+                        Tabbox.ActiveTab:Hide()
+                    end
 
-				function Tab:Hide()
-				    TweenService:Create(TabButton, Library.TweenInfo, {
-				        BackgroundTransparency = 1,
-				    }):Play()
-				    TweenService:Create(TabLabel, Library.TweenInfo, {
-				        TextTransparency = 0.5,
-				    }):Play()
-				    if TabIcon then
-				        TweenService:Create(TabIcon, Library.TweenInfo, {
-				            ImageTransparency = 0.5,
-				        }):Play()
-				    end
-				    TabContainer.Visible = false
-				
-				    if IsDefaultSearchbarSize then
-				        SearchBox.Size = UDim2.fromScale(1, 1)
-				    end
-				
-				    CurrentTabInfo.Visible = false
-				
-				    Library.ActiveTab = nil
-				end
+                    Button.BackgroundTransparency = 1
+                    Button.TextTransparency = 0
+                    Line.Visible = false
+
+                    Container.Visible = true
+
+                    Tabbox.ActiveTab = Tab
+                    Tab:Resize()
+                end
+
+                function Tab:Hide()
+                    Button.BackgroundTransparency = 0
+                    Button.TextTransparency = 0.5
+                    Line.Visible = true
+                    Container.Visible = false
+
+                    Tabbox.ActiveTab = nil
+                end
 
                 function Tab:Resize()
                     if Tabbox.ActiveTab ~= Tab then
