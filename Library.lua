@@ -1,7 +1,9 @@
-print(game:GetService("RbxAnalyticsService"):GetClientId())
+-- print(game:GetService("RbxAnalyticsService"):GetClientId())
+
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
+
 local CoreGui: CoreGui = cloneref(game:GetService("CoreGui"))
 local Players: Players = cloneref(game:GetService("Players"))
 local RunService: RunService = cloneref(game:GetService("RunService"))
@@ -6629,46 +6631,7 @@ function Library:CreateWindow(WindowInfo)
 		    Visible = not (WindowInfo.DisableSearch or false),
 		    Parent = RightWrapper,
 		})
-
-				SearchBox.Focused:Connect(function()
-		    -- Увеличение размера
-		    TweenService:Create(
-		        SearchBox,
-		        TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		        { BackgroundColor3 = Library.Scheme.AccentColor }
-		    ):Play()
 		
-		    -- Изменение обводки
-		    local stroke = SearchBox:FindFirstChildOfClass("UIStroke")
-		    if stroke then
-		        TweenService:Create(
-		            stroke,
-		            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		            { Color = Library.Scheme.AccentColor, Transparency = 0 }
-		        ):Play()
-		    end
-		end)
-
-		SearchBox.FocusLost:Connect(function()
-		    -- Возврат к исходному цвету
-		    TweenService:Create(
-		        SearchBox,
-		        TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		        { BackgroundColor3 = Library.Scheme.MainColor }
-		    ):Play()
-		
-		    -- Возврат обводки
-		    local stroke = SearchBox:FindFirstChildOfClass("UIStroke")
-		    if stroke then
-		        TweenService:Create(
-		            stroke,
-		            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		            { Color = Library.Scheme.OutlineColor, Transparency = 0 }
-		        ):Play()
-		    end
-		end)
-		
-		-- При наведении (если не в фокусе)
 		SearchBox.MouseEnter:Connect(function()
 		    if UserInputService:GetFocusedTextBox() ~= SearchBox then
 		        TweenService:Create(
