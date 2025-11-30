@@ -4370,9 +4370,6 @@ do
 	        Visible = Info.Visible,
 	
 	        Type = "Slider",
-	        
-	        IsDragging = false,
-	        FillTween = nil,
 	    }
 	
 	    local Holder = New("Frame", {
@@ -4423,38 +4420,13 @@ do
 	
 	    local Fill = New("Frame", {
 	        BackgroundColor3 = "AccentColor",
-	        Size = UDim2.fromScale(0, 1),
+	        Size = UDim2.fromScale(0.5, 1),
 	        Parent = Bar,
 	
 	        DPIExclude = {
 	            Size = true,
 	        },
 	    })
-	
-	    -- ============ ИСПРАВЛЕННАЯ ИНИЦИАЛИЗАЦИЯ ЗАПОЛНЕНИЯ ============
-	    local function InitializeFill()
-	        local X = (Slider.Value - Slider.Min) / (Slider.Max - Slider.Min)
-	        Fill.Size = UDim2.fromScale(math.max(0, math.min(1, X)), 1)
-	    end
-	
-	    local function AnimateFillBar(targetScale, instant)
-	        targetScale = math.max(0, math.min(1, targetScale)) -- Убедись что в диапазоне 0-1
-	        
-	        if Slider.FillTween then
-	            Slider.FillTween:Cancel()
-	        end
-	
-	        if instant then
-	            Fill.Size = UDim2.fromScale(targetScale, 1)
-	        else
-	            Slider.FillTween = TweenService:Create(
-	                Fill,
-	                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	                { Size = UDim2.fromScale(targetScale, 1) }
-	            )
-	            Slider.FillTween:Play()
-	        end
-	    end
 	
 	    function Slider:UpdateColors()
 	        if Library.Unloaded then
@@ -4502,7 +4474,7 @@ do
 	        end
 	
 	        local X = (Slider.Value - Slider.Min) / (Slider.Max - Slider.Min)
-	        AnimateFillBar(X, false)
+	        Fill.Size = UDim2.fromScale(X, 1)
 	    end
 	
 	    function Slider:OnChanged(Func)
@@ -4511,6 +4483,7 @@ do
 	
 	    function Slider:SetMax(Value)
 	        assert(Value > Slider.Min, "Max value cannot be less than the current min value.")
+	
 	        Slider:SetValue(math.clamp(Slider.Value, Slider.Min, Value))
 	        Slider.Max = Value
 	        Slider:Display()
@@ -4518,6 +4491,7 @@ do
 	
 	    function Slider:SetMin(Value)
 	        assert(Value < Slider.Max, "Min value cannot be greater than the current max value.")
+	
 	        Slider:SetValue(math.clamp(Slider.Value, Value, Slider.Max))
 	        Slider.Min = Value
 	        Slider:Display()
@@ -4534,6 +4508,7 @@ do
 	        end
 	
 	        Num = math.clamp(Num, Slider.Min, Slider.Max)
+	
 	        Slider.Value = Num
 	        Slider:Display()
 	
@@ -4554,6 +4529,7 @@ do
 	
 	    function Slider:SetVisible(Visible: boolean)
 	        Slider.Visible = Visible
+	
 	        Holder.Visible = Slider.Visible
 	        Groupbox:Resize()
 	    end
@@ -4590,7 +4566,7 @@ do
 	    end)
 	
 	    Bar.MouseLeave:Connect(function()
-	        if not Slider.Disabled and not Slider.IsDragging then
+	        if not Slider.Disabled then
 	            TweenService:Create(Bar, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 	                BackgroundColor3 = Library.Scheme.MainColor
 	            }):Play()
@@ -4605,21 +4581,6 @@ do
 	        if not IsClickInput(Input) or Slider.Disabled then
 	            return
 	        end
-	
-	        Slider.IsDragging = true
-	
-	        TweenService:Create(Bar, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-	            Size = UDim2.new(1, 0, 0, 16),
-	            BackgroundColor3 = Library.Scheme.AccentColor,
-	        }):Play()
-	
-	        TweenService:Create(Fill, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-	            BackgroundColor3 = Library:GetBetterColor(Library.Scheme.AccentColor, 3)
-	        }):Play()
-	
-	        TweenService:Create(DisplayLabel, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-	            TextTransparency = 0
-	        }):Play()
 	
 	        for _, Side in pairs(Library.ActiveTab.Sides) do
 	            Side.ScrollingEnabled = false
@@ -4641,17 +4602,6 @@ do
 	            RunService.RenderStepped:Wait()
 	        end
 	
-	        Slider.IsDragging = false
-	
-	        TweenService:Create(Bar, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-	            Size = UDim2.new(1, 0, 0, 13),
-	            BackgroundColor3 = Library.Scheme.MainColor,
-	        }):Play()
-	
-	        TweenService:Create(Fill, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-	            BackgroundColor3 = Library.Scheme.AccentColor
-	        }):Play()
-	
 	        for _, Side in pairs(Library.ActiveTab.Sides) do
 	            Side.ScrollingEnabled = true
 	        end
@@ -4663,7 +4613,6 @@ do
 	    end
 	
 	    Slider:UpdateColors()
-	    InitializeFill() -- ИСПРАВЛЕНИЕ: инициализируем правильно
 	    Slider:Display()
 	    Groupbox:Resize()
 	
@@ -4676,10 +4625,6 @@ do
 	
 	    return Slider
 	end
-
-	-- ============================================
-	-- 2. АНИМИРОВАННЫЙ DROPDOWN
-	-- ============================================
 	
 	function Funcs:AddDropdown(Idx, Info)
 	    Info = Library:Validate(Info, Templates.Dropdown)
@@ -4796,21 +4741,8 @@ do
 	        2,
 	        function(Active: boolean)
 	            Display.TextTransparency = (Active and SearchBox) and 1 or 0
-	            
-	            -- ============ АНИМАЦИЯ СТРЕЛКИ ============
-	            TweenService:Create(
-	                ArrowImage,
-	                TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	                { Rotation = Active and 180 or 0 }
-	            ):Play()
-	
-	            -- ============ АНИМАЦИЯ ПОДСВЕТКИ ============
-	            TweenService:Create(
-	                Display,
-	                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	                { BackgroundColor3 = Active and Library:GetBetterColor(Library.Scheme.MainColor, 2) or Library.Scheme.MainColor }
-	            ):Play()
-	
+	            ArrowImage.ImageTransparency = Active and 0 or 0.5
+	            ArrowImage.Rotation = Active and 180 or 0
 	            if SearchBox then
 	                SearchBox.Text = ""
 	                SearchBox.Visible = Active
@@ -4948,26 +4880,6 @@ do
 	                Button.BackgroundTransparency = Selected and 0 or 1
 	                Button.TextTransparency = IsDisabled and 0.8 or Selected and 0 or 0.5
 	            end
-	
-	            -- ============ АНИМАЦИЯ НАВЕДЕНИЯ НА ЭЛЕМЕНТ ============
-	            Button.MouseEnter:Connect(function()
-	                if not IsDisabled then
-	                    TweenService:Create(
-	                        Button,
-	                        TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	                        {
-	                            BackgroundColor3 = Library:GetBetterColor(Library.Scheme.MainColor, 2),
-	                            BackgroundTransparency = 0.5,
-	                        }
-	                    ):Play()
-	                end
-	            end)
-	
-	            Button.MouseLeave:Connect(function()
-	                if not IsDisabled then
-	                    Table:UpdateButton()
-	                end
-	            end)
 	
 	            if not IsDisabled then
 	                Button.MouseButton1Click:Connect(function()
@@ -7648,28 +7560,68 @@ function Library:CreateWindow(WindowInfo)
                 }
 
                 function Tab:Show()
-                    if Tabbox.ActiveTab then
-                        Tabbox.ActiveTab:Hide()
-                    end
+				    if Library.ActiveTab then
+				        Library.ActiveTab:Hide()
+				    end
+				
+				    TweenService:Create(TabButton, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				        BackgroundTransparency = 0,
+				    }):Play()
+				    TweenService:Create(TabLabel, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				        TextTransparency = 0,
+				    }):Play()
+				    if TabIcon then
+				        TweenService:Create(TabIcon, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				            ImageTransparency = 0,
+				        }):Play()
+				    end
+				
+				    if Description then
+				        CurrentTabInfo.Visible = true
+				
+				        if IsDefaultSearchbarSize then
+				            SearchBox.Size = UDim2.fromScale(0.3, 1)
+				        end
+				
+				        CurrentTabLabel.Text = Name
+				        CurrentTabDescription.Text = Description
+				    else
+				        CurrentTabInfo.Visible = false
+				        if IsDefaultSearchbarSize then
+				            SearchBox.Size = UDim2.fromScale(0.3, 1)
+				        end
+				        CurrentTabLabel.Text = Name
+				        CurrentTabDescription.Text = ""
+				    end
+				
+				    TabContainer.Visible = true
+				    Tab:RefreshSides()
+				
+				    Library.ActiveTab = Tab
+				
+				    if Library.Searching then
+				        Library:UpdateSearch(Library.SearchText)
+				    end
+				end
 
-                    Button.BackgroundTransparency = 1
-                    Button.TextTransparency = 0
-                    Line.Visible = false
-
-                    Container.Visible = true
-
-                    Tabbox.ActiveTab = Tab
-                    Tab:Resize()
-                end
-
-                function Tab:Hide()
-                    Button.BackgroundTransparency = 0
-                    Button.TextTransparency = 0.5
-                    Line.Visible = true
-                    Container.Visible = false
-
-                    Tabbox.ActiveTab = nil
-                end
+				function Tab:Hide()
+				    TweenService:Create(TabButton, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				        BackgroundTransparency = 1,
+				    }):Play()
+				    TweenService:Create(TabLabel, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				        TextTransparency = 0.5,
+				    }):Play()
+				    if TabIcon then
+				        TweenService:Create(TabIcon, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				            ImageTransparency = 0.5,
+				        }):Play()
+				    end
+				    TabContainer.Visible = false
+				
+				    CurrentTabInfo.Visible = false
+				
+				    Library.ActiveTab = nil
+				end
 
                 function Tab:Resize()
                     if Tabbox.ActiveTab ~= Tab then
