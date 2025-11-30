@@ -7564,14 +7564,14 @@ function Library:CreateWindow(WindowInfo)
 				        Library.ActiveTab:Hide()
 				    end
 				
-				    TweenService:Create(TabButton, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				    TweenService:Create(TabButton, Library.TweenInfo, {
 				        BackgroundTransparency = 0,
 				    }):Play()
-				    TweenService:Create(TabLabel, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				    TweenService:Create(TabLabel, Library.TweenInfo, {
 				        TextTransparency = 0,
 				    }):Play()
 				    if TabIcon then
-				        TweenService:Create(TabIcon, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				        TweenService:Create(TabIcon, Library.TweenInfo, {
 				            ImageTransparency = 0,
 				        }):Play()
 				    end
@@ -7580,25 +7580,15 @@ function Library:CreateWindow(WindowInfo)
 				        CurrentTabInfo.Visible = true
 				
 				        if IsDefaultSearchbarSize then
-				            SearchBox.Size = UDim2.fromScale(0.3, 1)
+				            SearchBox.Size = UDim2.fromScale(0.5, 1)
 				        end
 				
 				        CurrentTabLabel.Text = Name
 				        CurrentTabDescription.Text = Description
-				    else
-				        CurrentTabInfo.Visible = false
-				        if IsDefaultSearchbarSize then
-				            SearchBox.Size = UDim2.fromScale(0.3, 1)
-				        end
-				        CurrentTabLabel.Text = Name
-				        CurrentTabDescription.Text = ""
 				    end
 				
 				    TabContainer.Visible = true
-				    
-				    if Tab.RefreshSides then
-				        Tab:RefreshSides()
-				    end
+				    Tab:RefreshSides()
 				
 				    Library.ActiveTab = Tab
 				
@@ -7608,18 +7598,22 @@ function Library:CreateWindow(WindowInfo)
 				end
 
 				function Tab:Hide()
-				    TweenService:Create(TabButton, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				    TweenService:Create(TabButton, Library.TweenInfo, {
 				        BackgroundTransparency = 1,
 				    }):Play()
-				    TweenService:Create(TabLabel, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				    TweenService:Create(TabLabel, Library.TweenInfo, {
 				        TextTransparency = 0.5,
 				    }):Play()
 				    if TabIcon then
-				        TweenService:Create(TabIcon, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				        TweenService:Create(TabIcon, Library.TweenInfo, {
 				            ImageTransparency = 0.5,
 				        }):Play()
 				    end
 				    TabContainer.Visible = false
+				
+				    if IsDefaultSearchbarSize then
+				        SearchBox.Size = UDim2.fromScale(1, 1)
+				    end
 				
 				    CurrentTabInfo.Visible = false
 				
